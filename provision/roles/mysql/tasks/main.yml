@@ -1,4 +1,7 @@
 #Instala MySQL y configura la base de datos.
+# Definimos el manifiesto principal del modulo de mysql. Con este manifiesto se configura e instala mysql en la mv.
+# Se asegura de que el servicio de MySQL esté en ejecución y se configura la base de datos para iniciarizarla despues con wordpress
+
 - name: Instalar MySQL
   apt:
     name: mysql-server
@@ -15,10 +18,12 @@
     src: init-wordpress.sql.j2
     dest: /etc/mysql/init-wordpress.sql
 
-# - name: Ejecutar script de inicialización de MySQL
-#   command: mysql < /etc/mysql/init-wordpress.sql
-#   args:
-#     creates: /var/lib/mysql/{{ mysql_db_name }}
+# Reviso si la bd ya existe para hacer el vagrant reload y q no de fallo (no cree la bd otra vez)
+- name: Verificar si la base de datos de WordPress ya existe
+  shell: "mysql -u root -e 'SHOW DATABASES LIKE \"{{ mysql_db_name }}\";'"
+  register: db_check
+  changed_when: false
+  ignore_errors: yes
 
 - name: Ejecutar script de inicialización de MySQL si la base de datos no existe
   shell: |
@@ -27,3 +32,4 @@
     executable: /bin/bash
   become: true
   ignore_errors: yes
+  when: db_check.stdout.find("{{ mysql_db_name }}") == -1

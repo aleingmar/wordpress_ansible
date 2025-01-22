@@ -1,4 +1,11 @@
 # Descarga, instala y configura WordPress.
+#Define el manifiesto principal del modulo de wordpress. Con este manifiesto se configura e instala wordpress en la mv.
+#1. Instala, configura y arranca wordpress y administra una pagina web por defecto
+#2. Configura e inicializa la bd de mysql para que wordpress pueda usarla
+#3. Configura el servicio de apache para que redirija el tráfico al servicio de wordpress y sirva su contenido.
+
+
+#################################### INSTALACION Y CONFIGURACION DE WORDPRESS
 - name: Descargar WordPress
   get_url:
     url: "{{ wordpress_url }}"
@@ -43,7 +50,7 @@
     creates: /var/www/html/wordpress/wp-config.php
   register: wordpress_installed
 
-
+  #################################### CONFIGURAR CONTENIDO INICIAL DE WORDPRESS EN LA BD MYSQL
 - name: Copiar script de contenido inicial de WordPress
   template:
     src: init-wordpress-content.sql.j2
@@ -57,7 +64,12 @@
   when: wordpress_installed is changed
   ignore_errors: yes
 
-
+- name: Reiniciar MySQL para asegurar conexión con WordPress
+  systemd:
+    name: mysql
+    state: restarted
+  become: true
+############################################################33 CONFIGURAR APACHE PARA SERVIR WORDPRESS
 - name: Configurar Apache para WordPress
   template:
     src: wp-apache-config.conf.j2
