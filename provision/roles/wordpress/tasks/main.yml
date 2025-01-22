@@ -1,0 +1,70 @@
+# Descarga, instala y configura WordPress.
+- name: Descargar WordPress
+  get_url:
+    url: "{{ wordpress_url }}"
+    dest: /opt/wordpress.tar.gz
+
+- name: Extraer WordPress
+  unarchive:
+    src: /opt/wordpress.tar.gz
+    dest: /var/www/html
+    remote_src: yes
+
+- name: Generar claves de autenticación de WordPress
+  shell: curl -s https://api.wordpress.org/secret-key/1.1/salt/ > /tmp/wp-keys.php
+  args:
+    executable: /bin/bash
+  become: true
+
+- name: Crear archivo de configuración de WordPress
+  template:
+    src: wp-config.php.j2
+    dest: /var/www/html/wordpress/wp-config.php
+
+- name: Establecer permisos para WordPress
+  file:
+    path: /var/www/html/wordpress
+    owner: www-data
+    group: www-data
+    recurse: yes
+
+- name: Instalar WP-CLI
+  get_url:
+    url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+    dest: /usr/local/bin/wp
+    mode: '0755'
+
+- name: Instalar WordPress usando WP-CLI
+  command: >
+    wp core install --url="{{ wordpress_url }}" --title="{{ wordpress_wp_title }}"
+    --admin_user="{{ wordpress_admin_user }}" --admin_password="{{ wordpress_admin_password }}"
+    --admin_email="{{ wordpress_admin_email }}" --path={{ wordpress_path }} --allow-root={{ wordpress_allow_root }}
+  args:
+    creates: /var/www/html/wordpress/wp-config.php
+  register: wordpress_installed
+
+
+- name: Copiar script de contenido inicial de WordPress
+  template:
+    src: init-wordpress-content.sql.j2
+    dest: /etc/mysql/init-wordpress-content.sql
+
+- name: Insertar contenido inicial en WordPress
+  shell: mysql {{ mysql_db_name }} < /etc/mysql/init-wordpress-content.sql
+  args:
+    executable: /bin/bash
+  become: true
+  when: wordpress_installed is changed
+  ignore_errors: yes
+
+
+- name: Configurar Apache para WordPress
+  template:
+    src: wp-apache-config.conf.j2
+    dest: /etc/apache2/sites-available/wordpress.conf
+  notify: Restart Apache
+
+- name: Habilitar el sitio de WordPress en Apache
+  command: a2ensite wordpress
+  notify: Restart Apache
+

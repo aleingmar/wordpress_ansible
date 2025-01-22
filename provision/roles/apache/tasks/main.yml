@@ -1,0 +1,38 @@
+# Instala y configura Apache.
+- name: Actualizar lista de paquetes
+  apt:
+    update_cache: yes
+
+- name: Instalar Apache
+  apt:
+    name: apache2
+    state: present
+
+- name: Eliminar configuración predeterminada de Apache
+  file:
+    path: /etc/apache2/sites-enabled/000-default.conf
+    state: absent
+  notify: Restart Apache # <- Notifica que debe ejecutarse el handler
+
+- name: Deshabilitar sitio predeterminado
+  command: a2dissite 000-default
+  ignore_errors: yes
+  notify: Restart Apache # <- Notifica que debe ejecutarse el handler
+
+- name: Asegurar que Apache esté en ejecución
+  service:
+    name: apache2
+    state: started
+    enabled: yes
+
+# - name: Copiar configuración personalizada de Apache
+#   template:
+#     src: wp-apache-config.conf.j2
+#     dest: /etc/apache2/sites-available/wordpress.conf
+#   notify: Restart Apache # <- Notifica que debe ejecutarse el handler
+
+# - name: Habilitar sitio de WordPress
+#   command: a2ensite wordpress
+#   notify: Restart Apache # <- Notifica que debe ejecutarse el handler
+
+#- meta: flush_handlers

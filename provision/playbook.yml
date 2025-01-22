@@ -1,0 +1,19 @@
+# Define las variables y ejecuta los roles en orden.
+- hosts: all
+  become: true
+  vars:
+    document_root: "/vagrant"
+    wordpress_url: "https://wordpress.org/latest.tar.gz"
+
+  pre_tasks:  # Instalación de dependencias antes de ejecutar roles
+    - name: Instalar dependencias generales para WordPress y mysql
+      apt:
+        name:
+          - php
+          - php-mysql
+          - curl
+        state: present
+  roles:
+    - apache
+    - mysql
+    - wordpress

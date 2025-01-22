@@ -1,0 +1,29 @@
+#Instala MySQL y configura la base de datos.
+- name: Instalar MySQL
+  apt:
+    name: mysql-server
+    state: present
+
+- name: Asegurar que MySQL esté en ejecución
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+
+- name: Copiar script de inicialización de la base de datos
+  template:
+    src: init-wordpress.sql.j2
+    dest: /etc/mysql/init-wordpress.sql
+
+# - name: Ejecutar script de inicialización de MySQL
+#   command: mysql < /etc/mysql/init-wordpress.sql
+#   args:
+#     creates: /var/lib/mysql/{{ mysql_db_name }}
+
+- name: Ejecutar script de inicialización de MySQL si la base de datos no existe
+  shell: |
+    sudo mysql < /etc/mysql/init-wordpress.sql
+  args:
+    executable: /bin/bash
+  become: true
+  ignore_errors: yes
