@@ -33,6 +33,7 @@
     path: /var/www/html/wordpress
     owner: www-data
     group: www-data
+    mode: '0755'
     recurse: yes
 
 - name: Instalar WP-CLI
@@ -46,9 +47,9 @@
     wp core install --url="{{ wordpress_url }}" --title="{{ wordpress_wp_title }}"
     --admin_user="{{ wordpress_admin_user }}" --admin_password="{{ wordpress_admin_password }}"
     --admin_email="{{ wordpress_admin_email }}" --path={{ wordpress_path }} --allow-root={{ wordpress_allow_root }}
-  args:
-    creates: /var/www/html/wordpress/wp-config.php
-  register: wordpress_installed
+  # args:
+  #   creates: /var/www/html/wordpress/wp-config.php
+  #register: wordpress_installed
 
   #################################### CONFIGURAR CONTENIDO INICIAL DE WORDPRESS EN LA BD MYSQL
 - name: Copiar script de contenido inicial de WordPress
@@ -61,7 +62,7 @@
   args:
     executable: /bin/bash
   become: true
-  when: wordpress_installed is changed
+  #when: wordpress_installed is changed
   ignore_errors: yes
 
 - name: Reiniciar MySQL para asegurar conexión con WordPress

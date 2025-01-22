@@ -4,7 +4,7 @@ mysql_db_user: "wordpressuser"
 mysql_db_password: "securepassword123"
 
 # Configuración de WordPress
-wordpress_url: "http://localhost:8080"
+wordpress_url: "http://192.168.155.10"
 wordpress_wp_title: "Mi Sitio WordPress"
 wordpress_admin_user: "admin"
 wordpress_admin_password: "password"

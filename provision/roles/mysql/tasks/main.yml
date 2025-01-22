@@ -33,3 +33,9 @@
   become: true
   ignore_errors: yes
   when: db_check.stdout.find("{{ mysql_db_name }}") == -1
+
+- name: Reiniciar MySQL para asegurar conexión con WordPress
+  systemd:
+    name: mysql
+    state: restarted
+  become: true
