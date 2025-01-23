@@ -51,6 +51,25 @@
   #   creates: /var/www/html/wordpress/wp-config.php
   #register: wordpress_installed
 
+# - name: Comprobar si WordPress ya está instalado
+#   stat:
+#     path: /var/www/html/wordpress/.wp_installed
+#   register: wp_installed_file
+
+# - name: Instalar WordPress usando WP-CLI (si no está instalado)
+#   command: >
+#     wp core install --url="{{ wordpress_url }}" --title="{{ wordpress_wp_title }}"
+#     --admin_user="{{ wordpress_admin_user }}" --admin_password="{{ wordpress_admin_password }}"
+#     --admin_email="{{ wordpress_admin_email }}" --path={{ wordpress_path }} --allow-root
+#   when: not wp_installed_file.stat.exists
+#   register: wordpress_installed
+
+# - name: Crear archivo de instalación completada
+#   file:
+#     path: /var/www/html/wordpress/.wp_installed
+#     state: touch
+#   when: wordpress_installed is changed
+
   #################################### CONFIGURAR CONTENIDO INICIAL DE WORDPRESS EN LA BD MYSQL
 - name: Copiar script de contenido inicial de WordPress
   template:

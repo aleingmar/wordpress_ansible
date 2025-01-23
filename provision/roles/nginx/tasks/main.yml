@@ -1,0 +1,35 @@
+---
+- name: Instalar Nginx
+  apt:
+    name: nginx
+    state: present
+  become: true
+
+- name: Copiar configuración de Nginx
+  template:
+    src: nginx-proxy.conf.j2
+    dest: /etc/nginx/sites-available/wordpress
+  notify: Reiniciar Nginx
+  become: true
+
+- name: Habilitar configuración de Nginx
+  file:
+    src: /etc/nginx/sites-available/wordpress
+    dest: /etc/nginx/sites-enabled/wordpress
+    state: link
+  notify: Reiniciar Nginx
+  become: true
+
+- name: Eliminar configuración por defecto de Nginx
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reiniciar Nginx
+  become: true
+
+- name: Copiar página de error personalizada
+  template:
+    src: 403.html.j2
+    dest: /var/www/html/403.html
+  notify: Reiniciar Nginx
+  become: true

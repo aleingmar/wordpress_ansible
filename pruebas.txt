@@ -1,0 +1,15 @@
+# PROBAR PARA EVITAR ERROR AL INSERTAR DATOS --> LOS CAMPOS NULOS SE PERMITEN
+
+- name: Insertar contenido inicial en WordPress
+  mysql_db:
+    name: "{{ mysql_db_name }}"
+    state: import
+    target: "/etc/mysql/init-wordpress-content.sql"
+  become: true
+  ignore_errors: yes
+
+# PROBAR A QUE NGINX ESCUCHE EL PUERTO 80 y SEA APACHE QUIEN ESUCHE EL 8080
+
+
+# PROBAR EL WP-CLI COMPRBANDO QUE NO SE HACE DOS VECES
+
