@@ -76,12 +76,20 @@
     src: init-wordpress-content.sql.j2
     dest: /etc/mysql/init-wordpress-content.sql
 
+# - name: Insertar contenido inicial en WordPress
+#   shell: mysql {{ mysql_db_name }} < /etc/mysql/init-wordpress-content.sql
+#   args:
+#     executable: /bin/bash
+#   become: true
+#   #when: wordpress_installed is changed
+#   ignore_errors: yes
+
 - name: Insertar contenido inicial en WordPress
-  shell: mysql {{ mysql_db_name }} < /etc/mysql/init-wordpress-content.sql
-  args:
-    executable: /bin/bash
+  mysql_db:
+    name: "{{ mysql_db_name }}"
+    state: import
+    target: "/etc/mysql/init-wordpress-content.sql"
   become: true
-  #when: wordpress_installed is changed
   ignore_errors: yes
 
 - name: Reiniciar MySQL para asegurar conexión con WordPress
@@ -96,7 +104,7 @@
     dest: /etc/apache2/sites-available/wordpress.conf
   notify: Restart Apache
 
-- name: Habilitar el sitio de WordPress en Apache
+- name: Habilitar el sitio de WordPress (VirtualHost) en Apache
   command: a2ensite wordpress
   notify: Restart Apache
 

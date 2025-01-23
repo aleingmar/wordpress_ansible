@@ -8,6 +8,13 @@
     name: apache2
     state: present
 
+- name: Modificar ports.conf para que Apache escuche en 8080
+  template:
+    src: ports.conf.j2
+    dest: /etc/apache2/ports.conf
+  notify: Restart Apache # <- Notifica que debe ejecutarse el handler
+  become: true
+
 - name: Eliminar configuración predeterminada de Apache
   file:
     path: /etc/apache2/sites-enabled/000-default.conf

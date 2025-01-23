@@ -13,3 +13,6 @@
 
 # PROBAR EL WP-CLI COMPRBANDO QUE NO SE HACE DOS VECES
 
+
+sudo nano /etc/apache2/ports.conf
+sudo nano /etc/apache2/sites-available/000-default.conf
