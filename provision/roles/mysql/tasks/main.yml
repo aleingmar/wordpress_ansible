@@ -1,41 +1,41 @@
-#Instala MySQL y configura la base de datos.
-# Definimos el manifiesto principal del modulo de mysql. Con este manifiesto se configura e instala mysql en la mv.
-# Se asegura de que el servicio de MySQL esté en ejecución y se configura la base de datos para iniciarizarla despues con wordpress
+# Instala MySQL y configura la base de datos.
+# Definimos el manifiesto principal del módulo de MySQL. Con este manifiesto se configura e instala MySQL en la MV.
+# Se asegura de que el servicio de MySQL esté en ejecución y se configura la base de datos para inicializarla después con WordPress.
 
 - name: Instalar MySQL
   apt:
     name: mysql-server
-    state: present
+    state: present  # <- state: present Asegura que el paquete mysql-server esté instalado.
 
 - name: Asegurar que MySQL esté en ejecución
-  service:
+  service: # <- service: Asegura que el servicio de MySQL esté corriendo y habilitado en el arranque.
     name: mysql
     state: started
-    enabled: yes
+    enabled: yes  
 
 - name: Copiar script de inicialización de la base de datos
-  template:
+  template: # <- template: Copia un archivo de plantilla Jinja2 y lo coloca en la ruta especificada.
     src: init-wordpress.sql.j2
-    dest: /etc/mysql/init-wordpress.sql
+    dest: /etc/mysql/init-wordpress.sql  
 
-# Reviso si la bd ya existe para hacer el vagrant reload y q no de fallo (no cree la bd otra vez)
+# Reviso si la BD ya existe para hacer el vagrant reload y que no dé fallo (no cree la BD otra vez).
 - name: Verificar si la base de datos de WordPress ya existe
   shell: "mysql -u root -e 'SHOW DATABASES LIKE \"{{ mysql_db_name }}\";'"
-  register: db_check
-  changed_when: false
-  ignore_errors: yes
+  register: db_check  # <- register: Almacena la salida del comando en la variable db_check.
+  changed_when: false  # <- changed_when: Indica que esta tarea no cambia el estado del sistema, evitando que se marque como "changed".
+  ignore_errors: yes  # <- ignore_errors: Permite continuar la ejecución incluso si la tarea falla.
 
 - name: Ejecutar script de inicialización de MySQL si la base de datos no existe
   shell: |
     sudo mysql < /etc/mysql/init-wordpress.sql
   args:
-    executable: /bin/bash
-  become: true
+    executable: /bin/bash  # <- args: Define el intérprete de comandos que debe usarse para ejecutar el script.
+  become: true  # <- become: Ejecuta la tarea con privilegios elevados (sudo).
   ignore_errors: yes
-  when: db_check.stdout.find("{{ mysql_db_name }}") == -1
+  when: db_check.stdout.find("{{ mysql_db_name }}") == -1  # <- when: Condición que ejecuta la tarea solo si la BD no existe.
 
 - name: Reiniciar MySQL para asegurar conexión con WordPress
   systemd:
     name: mysql
-    state: restarted
+    state: restarted  # <- state: restarted Reinicia el servicio de MySQL para aplicar cambios.
   become: true

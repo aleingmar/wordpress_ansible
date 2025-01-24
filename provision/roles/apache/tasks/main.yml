@@ -1,45 +1,34 @@
 # Instala y configura Apache.
 - name: Actualizar lista de paquetes
-  apt:
-    update_cache: yes
+  apt:  
+    update_cache: yes  # <- apt: Utiliza el gestor de paquetes APT para actualizar la caché de paquetes disponibles.
 
 - name: Instalar Apache
   apt:
     name: apache2
-    state: present
+    state: present  # <- state: present Asegura que el paquete apache2 esté instalado.
 
+# Hago esto pk quiero que escuche el 8080 y el nginx el 80. Y por edefecto el apache escucha el 80.
 - name: Modificar ports.conf para que Apache escuche en 8080
-  template:
+  template: # <- template: Copia un archivo de plantilla Jinja2 desde este directorio de roles/ y lo coloca en la ruta especificada.
     src: ports.conf.j2
-    dest: /etc/apache2/ports.conf
-  notify: Restart Apache # <- Notifica que debe ejecutarse el handler
-  become: true
+    dest: /etc/apache2/ports.conf 
+  notify: Restart Apache  # <- notify: Notifica que debe ejecutarse el handler
+  become: true  # <- become: Ejecuta la tarea con privilegios elevados (sudo).
 
 - name: Eliminar configuración predeterminada de Apache
-  file:
+  file: # <- file: Administra archivos y directorios; en este caso, elimina el archivo especificado.
     path: /etc/apache2/sites-enabled/000-default.conf
-    state: absent
-  notify: Restart Apache # <- Notifica que debe ejecutarse el handler
+    state: absent  # <- state: absent Asegura que el archivo no exista.
+  notify: Restart Apache  
 
 - name: Deshabilitar sitio predeterminado
-  command: a2dissite 000-default
-  ignore_errors: yes
-  notify: Restart Apache # <- Notifica que debe ejecutarse el handler
+  command: a2dissite 000-default  # <- command: Ejecuta un comando en la terminal, en este caso deshabilita el sitio predeterminado de Apache.
+  ignore_errors: yes  # <- ignore_errors: Evita que un error en esta tarea detenga la ejecución del playbook.
+  notify: Restart Apache  
 
 - name: Asegurar que Apache esté en ejecución
-  service:
+  service: # <- service: Administra servicios en el sistema; aquí se asegura de que Apache esté en ejecución y habilitado en el arranque.
     name: apache2
     state: started
-    enabled: yes
-
-# - name: Copiar configuración personalizada de Apache
-#   template:
-#     src: wp-apache-config.conf.j2
-#     dest: /etc/apache2/sites-available/wordpress.conf
-#   notify: Restart Apache # <- Notifica que debe ejecutarse el handler
-
-# - name: Habilitar sitio de WordPress
-#   command: a2ensite wordpress
-#   notify: Restart Apache # <- Notifica que debe ejecutarse el handler
-
-#- meta: flush_handlers
+    enabled: yes  

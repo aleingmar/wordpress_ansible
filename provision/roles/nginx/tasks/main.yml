@@ -1,35 +1,36 @@
 ---
+# Aprovisiona la maquina de un nginx que actua como proxy inverso y bloquea trafico a ciertas url sensibles. Redirije el trafico permitido a apache
 - name: Instalar Nginx
   apt:
     name: nginx
-    state: present
-  become: true
+    state: present  # <- state: present Asegura que el paquete Nginx esté instalado.
+  become: true  # <- become: Ejecuta la tarea con privilegios elevados (sudo).
 
 - name: Copiar configuración de Nginx
   template:
     src: nginx-proxy.conf.j2
-    dest: /etc/nginx/sites-available/wordpress
-  notify: Reiniciar Nginx
-  become: true
+    dest: /etc/nginx/sites-available/wordpress  # <- template: Copia un archivo de plantilla Jinja2 y lo coloca en la ruta especificada.
+  notify: Reiniciar Nginx  # <- notify: Notifica a un handler que debe ejecutarse después de la tarea.
+  become: true  
 
 - name: Habilitar configuración de Nginx
   file:
     src: /etc/nginx/sites-available/wordpress
     dest: /etc/nginx/sites-enabled/wordpress
-    state: link
+    state: link  # <- state: link Crea un enlace simbólico entre los archivos para activar la configuración.
   notify: Reiniciar Nginx
-  become: true
+  become: true  
 
 - name: Eliminar configuración por defecto de Nginx
   file:
     path: /etc/nginx/sites-enabled/default
-    state: absent
+    state: absent  # <- state: absent Asegura que el archivo o directorio especificado no exista.
   notify: Reiniciar Nginx
-  become: true
+  become: true  
 
 - name: Copiar página de error personalizada
-  template:
+  template: # <- template: Copia un archivo de plantilla Jinja2 y lo coloca en la ruta especificada.
     src: 403.html.j2
-    dest: /var/www/html/403.html
+    dest: /var/www/html/403.html  
   notify: Reiniciar Nginx
-  become: true
+  become: true  

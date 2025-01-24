@@ -1,20 +1,22 @@
 # Define las variables y ejecuta los roles en orden.
-- hosts: all
-  become: true
-  vars:
-    document_root: "/vagrant"
-    wordpress_url: "https://wordpress.org/latest.tar.gz"
+- hosts: all  # <- hosts: all Define que esta configuración se aplicará a todos los hosts especificados en el inventario.
+  become: true  # <- become: true Ejecuta todas las tareas con privilegios elevados (sudo).
 
-  pre_tasks:  # Instalación de dependencias antes de ejecutar roles
-    - name: Instalar dependencias generales para WordPress y mysql
-      apt:
+  vars: # <- vars: Define variables reutilizables en todo el playbook.
+    document_root: "/vagrant"
+    wordpress_url: "https://wordpress.org/latest.tar.gz"  
+
+  pre_tasks:  # Instalación de dependencias antes de ejecutar roles.
+    - name: Instalar dependencias generales para WordPress y MySQL
+      apt: # <- apt: Utiliza el gestor de paquetes APT para instalar los paquetes especificados.
         name:
           - php
           - php-mysql
           - curl
-        state: present
-  roles:
+        state: present  
+
+  roles: # <- roles: Define los roles a ejecutar en el orden indicado.
     - apache
     - mysql
     - wordpress
-    - nginx
+    - nginx  

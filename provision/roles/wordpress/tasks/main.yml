@@ -5,48 +5,89 @@
 #3. Configura el servicio de apache para que redirija el tráfico al servicio de wordpress y sirva su contenido.
 
 
+#############################################################################333
 #################################### INSTALACION Y CONFIGURACION DE WORDPRESS
 - name: Descargar WordPress
-  get_url:
+  get_url: # <- get_url: Descarga un archivo desde una URL y lo guarda en la ruta especificada.
     url: "{{ wordpress_url }}"
-    dest: /opt/wordpress.tar.gz
+    dest: /opt/wordpress.tar.gz  
 
 - name: Extraer WordPress
-  unarchive:
+  unarchive: # <- unarchive: Extrae un archivo comprimido en la máquina remota.
     src: /opt/wordpress.tar.gz
     dest: /var/www/html
-    remote_src: yes
+    remote_src: yes  
 
 - name: Generar claves de autenticación de WordPress
   shell: curl -s https://api.wordpress.org/secret-key/1.1/salt/ > /tmp/wp-keys.php
-  args:
-    executable: /bin/bash
-  become: true
+  args: # <- args: Define el intérprete de comandos que debe usarse para ejecutar el script.
+    executable: /bin/bash  
+  become: true  # <- become: Ejecuta la tarea con privilegios elevados (sudo).
 
 - name: Crear archivo de configuración de WordPress
-  template:
+  template: # <- template: Copia un archivo de plantilla Jinja2 y lo coloca en la ruta especificada.
     src: wp-config.php.j2
-    dest: /var/www/html/wordpress/wp-config.php
+    dest: /var/www/html/wordpress/wp-config.php  
 
 - name: Establecer permisos para WordPress
-  file:
+  file: # <- file: Administra permisos y propiedades de archivos y directorios; recurse: yes aplica los cambios a todo el contenido del directorio.
     path: /var/www/html/wordpress
     owner: www-data
     group: www-data
     mode: '0755'
-    recurse: yes
+    recurse: yes  
 
 - name: Instalar WP-CLI
   get_url:
     url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
     dest: /usr/local/bin/wp
-    mode: '0755'
+    mode: '0755'  # <- mode: '0755' Define permisos para permitir la ejecución del archivo.
 
 - name: Instalar WordPress usando WP-CLI
-  command: >
+  command: > # <- command: Ejecuta un comando en la terminal, en este caso instala WordPress mediante WP-CLI.
     wp core install --url="{{ wordpress_url }}" --title="{{ wordpress_wp_title }}"
     --admin_user="{{ wordpress_admin_user }}" --admin_password="{{ wordpress_admin_password }}"
     --admin_email="{{ wordpress_admin_email }}" --path={{ wordpress_path }} --allow-root={{ wordpress_allow_root }}
+  
+
+  #################################### CONFIGURAR CONTENIDO INICIAL DE WORDPRESS EN LA BD MYSQL
+- name: Copiar script de contenido inicial de WordPress
+  template:
+    src: init-wordpress-content.sql.j2
+    dest: /etc/mysql/init-wordpress-content.sql 
+
+- name: Insertar contenido inicial en WordPress
+  mysql_db: # <- mysql_db: Administra bases de datos MySQL; state: import importa datos desde un archivo SQL.
+    name: "{{ mysql_db_name }}"
+    state: import
+    target: "/etc/mysql/init-wordpress-content.sql"
+  become: true
+  ignore_errors: yes  
+
+- name: Reiniciar MySQL para asegurar conexión con WordPress
+  systemd: # <- systemd: Administra servicios en sistemas basados en systemd; aquí reinicia MySQL.
+    name: mysql
+    state: restarted  
+  become: true
+
+############################################################ CONFIGURAR APACHE PARA SERVIR WORDPRESS
+- name: Configurar Apache para WordPress
+  template:
+    src: wp-apache-config.conf.j2
+    dest: /etc/apache2/sites-available/wordpress.conf
+  notify: Restart Apache  # <- notify: Notifica a un handler que debe ejecutarse después de la tarea.
+
+- name: Habilitar el sitio de WordPress (VirtualHost) en Apache
+  command: a2ensite wordpress  # <- command: Ejecuta un comando en la terminal, en este caso habilita el VirtualHost de WordPress en Apache.
+  notify: Restart Apache
+
+
+
+# - name: Instalar WordPress usando WP-CLI
+#   command: >
+#     wp core install --url="{{ wordpress_url }}" --title="{{ wordpress_wp_title }}"
+#     --admin_user="{{ wordpress_admin_user }}" --admin_password="{{ wordpress_admin_password }}"
+#     --admin_email="{{ wordpress_admin_email }}" --path={{ wordpress_path }} --allow-root={{ wordpress_allow_root }}
   # args:
   #   creates: /var/www/html/wordpress/wp-config.php
   #register: wordpress_installed
@@ -70,11 +111,7 @@
 #     state: touch
 #   when: wordpress_installed is changed
 
-  #################################### CONFIGURAR CONTENIDO INICIAL DE WORDPRESS EN LA BD MYSQL
-- name: Copiar script de contenido inicial de WordPress
-  template:
-    src: init-wordpress-content.sql.j2
-    dest: /etc/mysql/init-wordpress-content.sql
+
 
 # - name: Insertar contenido inicial en WordPress
 #   shell: mysql {{ mysql_db_name }} < /etc/mysql/init-wordpress-content.sql
@@ -83,28 +120,3 @@
 #   become: true
 #   #when: wordpress_installed is changed
 #   ignore_errors: yes
-
-- name: Insertar contenido inicial en WordPress
-  mysql_db:
-    name: "{{ mysql_db_name }}"
-    state: import
-    target: "/etc/mysql/init-wordpress-content.sql"
-  become: true
-  ignore_errors: yes
-
-- name: Reiniciar MySQL para asegurar conexión con WordPress
-  systemd:
-    name: mysql
-    state: restarted
-  become: true
-############################################################33 CONFIGURAR APACHE PARA SERVIR WORDPRESS
-- name: Configurar Apache para WordPress
-  template:
-    src: wp-apache-config.conf.j2
-    dest: /etc/apache2/sites-available/wordpress.conf
-  notify: Restart Apache
-
-- name: Habilitar el sitio de WordPress (VirtualHost) en Apache
-  command: a2ensite wordpress
-  notify: Restart Apache
-
